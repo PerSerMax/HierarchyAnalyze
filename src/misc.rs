@@ -49,7 +49,10 @@ pub struct Analyze {
 }
 
 impl Analyze {
-    pub fn new(countries: Vec<Country>) -> Analyze {
+    pub fn new(mut countries: Vec<Country>, standartize: bool) -> Analyze {
+        if standartize {
+            std_countries(&mut countries);
+        }
         let mut clusters: Vec<Cluster> = Vec::new();
         for i in countries {
             let mut c = Cluster::new();
@@ -104,12 +107,63 @@ impl Analyze {
         for i in 0..self.clusters.len() {
             println!("Cluster {}: [", i+1);
             for country in &self.clusters[i].countries {
-                println!("\t{},", country.name);
+                println!("\t{}", country.name);
             }
             println!("]");
         }
     }
 }
+
+pub fn avg(v: &Vec<f64>) -> f64 {
+    v.iter().sum::<f64>() / v.len() as f64
+}
+
+pub fn std_val(v: &Vec<f64>) -> f64 {
+    let avg = avg(v);
+    (v.iter().map(|x| (x - avg).powi(2)).sum::<f64>() / v.len() as f64).sqrt()
+}
+
+pub fn std_values(v: &mut Vec<f64>){
+    let avg = avg(v);
+    let std_val = std_val(v);
+    for i in v {
+        *i = (*i - avg) / std_val;
+    }
+}
+
+pub fn std_countries(v: &mut Vec<Country>) {
+    if v.is_empty() || v[0].attrs.is_empty() {
+        return;
+    }
+
+    let num_attrs = v[0].attrs.len();
+    let num_countries = v.len();
+
+    // Соберем значения по каждому признаку (столбцу)
+    let mut columns: Vec<Vec<f64>> = vec![Vec::with_capacity(num_countries); num_attrs];
+    for country in v.iter() {
+        for (i, val) in country.attrs.iter().enumerate() {
+            columns[i].push(*val);
+        }
+    }
+
+    // Стандартизируем каждый столбец
+    for i in 0..num_attrs {
+        let avg_i = avg(&columns[i]);
+        let std_i = std_val(&columns[i]);
+
+        for j in 0..num_countries {
+            // если std_i == 0, то все значения одинаковые — ставим 0
+            if std_i == 0.0 {
+                v[j].attrs[i] = 0.0;
+            } else {
+                v[j].attrs[i] = (v[j].attrs[i] - avg_i) / std_i;
+            }
+        }
+    }
+}
+
+
 pub fn read_file(filename: &str) -> Vec<Country> {
     let mut countries_map: HashMap<String, Vec<f64>> = HashMap::new();
     let data = fs::read_to_string(filename).unwrap_or_else(|e| {
@@ -120,14 +174,19 @@ pub fn read_file(filename: &str) -> Vec<Country> {
         }
         std::process::exit(1); // Завершаем программу с ошибкой
     });
+    let mut idx = 0;
     for line in data.lines() {
-        let mut line = line.trim().split("\t");
+        idx += 1;
+        let mut line = line.trim().split(",");
         let country_name: String = line.next().unwrap().to_string();
         let country_attrs = line
             .map(|s|
                 s.trim()
                     .parse::<f64>()
-                    .unwrap())
+                    .unwrap_or_else(|e| {
+                        println!("Ошибка на строке {idx} в этой штуке {s}");
+                        std::process::exit(1);
+                    }))
             .collect();
         countries_map.insert(country_name, country_attrs);
     }
