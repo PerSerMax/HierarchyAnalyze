@@ -100,7 +100,11 @@ impl Analyze {
     }
     pub fn cluster_n_times(&mut self, n: usize) -> f64{
         let mut result = 0.0;
-        for _ in 0..n { result = self.nearest_union(); }
+        for _ in 0..n {
+            result = self.nearest_union();
+            print!("{result:.2}, ")
+        }
+        println!();
         result
     }
     pub fn print(&self) {
