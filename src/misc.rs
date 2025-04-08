@@ -123,14 +123,6 @@ pub fn std_val(v: &Vec<f64>) -> f64 {
     (v.iter().map(|x| (x - avg).powi(2)).sum::<f64>() / v.len() as f64).sqrt()
 }
 
-pub fn std_values(v: &mut Vec<f64>){
-    let avg = avg(v);
-    let std_val = std_val(v);
-    for i in v {
-        *i = (*i - avg) / std_val;
-    }
-}
-
 pub fn std_countries(v: &mut Vec<Country>) {
     if v.is_empty() || v[0].attrs.is_empty() {
         return;
@@ -184,7 +176,7 @@ pub fn read_file(filename: &str) -> Vec<Country> {
                 s.trim()
                     .parse::<f64>()
                     .unwrap_or_else(|e| {
-                        println!("Ошибка на строке {idx} в этой штуке {s}");
+                        println!("Ошибка {e} на строке {idx} в этой штуке {s}");
                         std::process::exit(1);
                     }))
             .collect();
