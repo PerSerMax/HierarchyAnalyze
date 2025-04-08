@@ -48,7 +48,6 @@ pub struct Analyze {
     pub clusters: Vec<Cluster>,
 }
 
-
 impl Analyze {
     pub fn new(countries: Vec<Country>) -> Analyze {
         let mut clusters: Vec<Cluster> = Vec::new();
@@ -98,7 +97,7 @@ impl Analyze {
     }
     pub fn cluster_n_times(&mut self, n: usize) -> f64{
         let mut result = 0.0;
-        for i in 0..n { result = self.nearest_union(); }
+        for _ in 0..n { result = self.nearest_union(); }
         result
     }
     pub fn print(&self) {
@@ -138,4 +137,3 @@ pub fn read_file(filename: &str) -> Vec<Country> {
     }
     countries
 }
-
