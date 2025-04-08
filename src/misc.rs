@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::{fs, io, ptr};
 
+const SEP: &str = "\t";
+
 #[derive(Debug, Clone)]
 pub struct Country  {
     pub name: String,
@@ -67,6 +69,11 @@ impl Analyze {
             result += (a[i] - b[i]).powi(2)
         }
         result
+        // let mut result = 0.0;
+        // for i in 0..a.len() {
+        //     result += (a[i] - b[i]).abs()
+        // }
+        // result
     }
     fn nearest_clusters(&self) -> (&Cluster, &Cluster, f64) {
         let mut min_lc: &Cluster = &self.clusters[0];
@@ -111,7 +118,11 @@ impl Analyze {
         for i in 0..self.clusters.len() {
             println!("Cluster {}: [", i+1);
             for country in &self.clusters[i].countries {
-                println!("\t{}", country.name);
+                print!("\t{}: ", country.name);
+                for j in &country.attrs {
+                    print!("{:.1}, ", j);
+                }
+                println!();
             }
             println!("]");
         }
@@ -131,25 +142,18 @@ pub fn std_countries(v: &mut Vec<Country>) {
     if v.is_empty() || v[0].attrs.is_empty() {
         return;
     }
-
     let num_attrs = v[0].attrs.len();
     let num_countries = v.len();
-
-    // Соберем значения по каждому признаку (столбцу)
     let mut columns: Vec<Vec<f64>> = vec![Vec::with_capacity(num_countries); num_attrs];
     for country in v.iter() {
         for (i, val) in country.attrs.iter().enumerate() {
             columns[i].push(*val);
         }
     }
-
-    // Стандартизируем каждый столбец
     for i in 0..num_attrs {
         let avg_i = avg(&columns[i]);
         let std_i = std_val(&columns[i]);
-
         for j in 0..num_countries {
-            // если std_i == 0, то все значения одинаковые — ставим 0
             if std_i == 0.0 {
                 v[j].attrs[i] = 0.0;
             } else {
@@ -158,7 +162,6 @@ pub fn std_countries(v: &mut Vec<Country>) {
         }
     }
 }
-
 
 pub fn read_file(filename: &str) -> Vec<Country> {
     let mut countries_map: HashMap<String, Vec<f64>> = HashMap::new();
@@ -173,8 +176,9 @@ pub fn read_file(filename: &str) -> Vec<Country> {
     let mut idx = 0;
     for line in data.lines() {
         idx += 1;
-        let mut line = line.trim().split(",");
+        let mut line = line.trim().split(SEP);
         let country_name: String = line.next().unwrap().to_string();
+        line.next();
         let country_attrs = line
             .map(|s|
                 s.trim()
