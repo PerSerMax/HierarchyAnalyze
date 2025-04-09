@@ -2,19 +2,21 @@ use std::collections::HashMap;
 use std::{fs, io};
 
 #[derive(Debug, Clone)]
-pub struct Country  {
+pub struct Country {
     pub name: String,
     pub attrs: Vec<f64>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Cluster {
-    pub countries: Vec<Country>
+    pub countries: Vec<Country>,
 }
 
 impl Cluster {
     pub fn new() -> Cluster {
-        Cluster { countries: Vec::new() }
+        Cluster {
+            countries: Vec::new(),
+        }
     }
     pub fn add(&mut self, country: Country) {
         self.countries.push(country);
@@ -28,8 +30,8 @@ impl Cluster {
                 let d = Analyze::range(&i.attrs, &j.attrs);
                 if d < min {
                     min = d;
-                    lc = &i;
-                    rc = &j;
+                    lc = i;
+                    rc = j;
                 }
             }
         }
@@ -61,7 +63,7 @@ impl Analyze {
         }
         Analyze { clusters }
     }
-    fn range(a: &Vec<f64>, b: &Vec<f64>) -> f64 {
+    fn range(a: &[f64], b: &[f64]) -> f64 {
         let mut result = 0.0;
         for i in 0..a.len() {
             result += (a[i] - b[i]).powi(2)
@@ -69,12 +71,13 @@ impl Analyze {
         result
     }
     fn nearest_clusters(&self) -> (usize, usize, f64) {
-        let mut min_lc= 0;
-        let mut min_rc= 1;
+        let mut min_lc = 0;
+        let mut min_rc = 1;
         let mut min_dist: f64 = f64::MAX;
         for lcluster in 0..self.clusters.len() {
-            for rcluster in lcluster+1..self.clusters.len() {
-                let (_lc, _rc, dist) = Cluster::range(&self.clusters[lcluster], &self.clusters[rcluster]);
+            for rcluster in lcluster + 1..self.clusters.len() {
+                let (_lc, _rc, dist) =
+                    Cluster::range(&self.clusters[lcluster], &self.clusters[rcluster]);
                 if dist < min_dist {
                     min_dist = dist;
                     min_lc = lcluster;
@@ -91,7 +94,7 @@ impl Analyze {
         self.clusters.remove(rc);
         dist
     }
-    pub fn cluster_n_times(&mut self, n: usize) -> f64{
+    pub fn cluster_n_times(&mut self, n: usize) -> f64 {
         let mut result = 0.0;
         for _ in 0..n {
             result = self.nearest_union();
@@ -102,7 +105,7 @@ impl Analyze {
     }
     pub fn print(&self) {
         for i in 0..self.clusters.len() {
-            println!("Cluster {}: [", i+1);
+            println!("Cluster {}: [", i + 1);
             for country in &self.clusters[i].countries {
                 print!("\t{}: ", country.name);
                 for j in &country.attrs {
@@ -115,16 +118,16 @@ impl Analyze {
     }
 }
 
-pub fn avg(v: &Vec<f64>) -> f64 {
+pub fn avg(v: &[f64]) -> f64 {
     v.iter().sum::<f64>() / v.len() as f64
 }
 
-pub fn std_val(v: &Vec<f64>) -> f64 {
+pub fn std_val(v: &[f64]) -> f64 {
     let avg = avg(v);
     (v.iter().map(|x| (x - avg).powi(2)).sum::<f64>() / v.len() as f64).sqrt()
 }
 
-pub fn std_countries(v: &mut Vec<Country>) {
+pub fn std_countries(v: &mut [Country]) {
     if v.is_empty() || v[0].attrs.is_empty() {
         return;
     }
@@ -159,26 +162,26 @@ pub fn read_file(filename: &str, sep: &str) -> Vec<Country> {
         }
         std::process::exit(1); // Завершаем программу с ошибкой
     });
-    let mut idx = 0;
-    for line in data.lines() {
-        idx += 1;
+    for (idx, line) in data.lines().enumerate() {
         let mut line = line.trim().split(sep);
         let country_name: String = line.next().unwrap().to_string();
         line.next();
         let country_attrs = line
-            .map(|s|
-                s.trim()
-                    .parse::<f64>()
-                    .unwrap_or_else(|e| {
-                        println!("Ошибка {e} на строке {idx} в этой штуке {s}");
-                        std::process::exit(1);
-                    }))
+            .map(|s| {
+                s.trim().parse::<f64>().unwrap_or_else(|e| {
+                    println!("Ошибка {e} на строке {idx} в этой штуке {s}");
+                    std::process::exit(1);
+                })
+            })
             .collect();
         countries_map.insert(country_name, country_attrs);
     }
     let mut countries: Vec<Country> = Vec::new();
     for (country, attrs) in countries_map {
-        countries.push(Country { name: country, attrs });
+        countries.push(Country {
+            name: country,
+            attrs,
+        });
     }
     countries
 }

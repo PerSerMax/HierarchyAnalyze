@@ -6,7 +6,10 @@ use std::time;
 
 fn main() {
     let countries = read_file("data.txt", "\t");
-    println!("Введите количество итераций алгоритма (<{}): ", countries.len());
+    println!(
+        "Введите количество итераций алгоритма (<{}): ",
+        countries.len()
+    );
 
     let mut input = String::new();
     io::stdin()
@@ -14,7 +17,8 @@ fn main() {
         .expect("Не удалось прочитать строку");
 
     let begin_time = time::Instant::now();
-    let n = input.trim()
+    let n = input
+        .trim()
         .parse::<usize>()
         .expect("Пожалуйста введите число");
 
@@ -30,5 +34,8 @@ fn main() {
 
     println!("Расстояние между последними объединенными кластерами: {d}");
     let end_time = time::Instant::now();
-    println!("Время выполнения: {} секунд!\nА питон так сможет?? ХАХАХАХАХА", end_time.duration_since(begin_time).as_secs_f64());
+    println!(
+        "Время выполнения: {} секунд!\nА питон так сможет?? ХАХАХАХАХА",
+        end_time.duration_since(begin_time).as_secs_f64()
+    );
 }
