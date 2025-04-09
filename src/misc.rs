@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 use std::{fs, io, ptr};
 
-const SEP: &str = "\t";
-
 #[derive(Debug, Clone)]
 pub struct Country  {
     pub name: String,
@@ -69,24 +67,18 @@ impl Analyze {
             result += (a[i] - b[i]).powi(2)
         }
         result
-        // let mut result = 0.0;
-        // for i in 0..a.len() {
-        //     result += (a[i] - b[i]).abs()
-        // }
-        // result
     }
     fn nearest_clusters(&self) -> (&Cluster, &Cluster, f64) {
         let mut min_lc: &Cluster = &self.clusters[0];
         let mut min_rc: &Cluster = &self.clusters[1];
         let mut min_dist: f64 = f64::MAX;
-        for lcluster in &self.clusters {
-            for rcluster in &self.clusters {
-                if ptr::eq(lcluster, rcluster) { continue; }
-                let (_lc, _rc, dist) = Cluster::range(lcluster, rcluster);
+        for lcluster in 0..self.clusters.len() {
+            for rcluster in lcluster+1..self.clusters.len() {
+                let (_lc, _rc, dist) = Cluster::range(&self.clusters[lcluster], &self.clusters[rcluster]);
                 if dist < min_dist {
                     min_dist = dist;
-                    min_lc = lcluster;
-                    min_rc = rcluster;
+                    min_lc = &self.clusters[lcluster];
+                    min_rc = &self.clusters[rcluster];
                 }
             }
         }
@@ -163,7 +155,7 @@ pub fn std_countries(v: &mut Vec<Country>) {
     }
 }
 
-pub fn read_file(filename: &str) -> Vec<Country> {
+pub fn read_file(filename: &str, sep: &str) -> Vec<Country> {
     let mut countries_map: HashMap<String, Vec<f64>> = HashMap::new();
     let data = fs::read_to_string(filename).unwrap_or_else(|e| {
         match e.kind() {
@@ -176,7 +168,7 @@ pub fn read_file(filename: &str) -> Vec<Country> {
     let mut idx = 0;
     for line in data.lines() {
         idx += 1;
-        let mut line = line.trim().split(SEP);
+        let mut line = line.trim().split(sep);
         let country_name: String = line.next().unwrap().to_string();
         line.next();
         let country_attrs = line
