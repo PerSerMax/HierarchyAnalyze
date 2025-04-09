@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::{fs, io, ptr};
+use std::{fs, io};
 
 #[derive(Debug, Clone)]
 pub struct Country  {
@@ -68,17 +68,17 @@ impl Analyze {
         }
         result
     }
-    fn nearest_clusters(&self) -> (&Cluster, &Cluster, f64) {
-        let mut min_lc: &Cluster = &self.clusters[0];
-        let mut min_rc: &Cluster = &self.clusters[1];
+    fn nearest_clusters(&self) -> (usize, usize, f64) {
+        let mut min_lc= 0;
+        let mut min_rc= 1;
         let mut min_dist: f64 = f64::MAX;
         for lcluster in 0..self.clusters.len() {
             for rcluster in lcluster+1..self.clusters.len() {
                 let (_lc, _rc, dist) = Cluster::range(&self.clusters[lcluster], &self.clusters[rcluster]);
                 if dist < min_dist {
                     min_dist = dist;
-                    min_lc = &self.clusters[lcluster];
-                    min_rc = &self.clusters[rcluster];
+                    min_lc = lcluster;
+                    min_rc = rcluster;
                 }
             }
         }
@@ -86,15 +86,9 @@ impl Analyze {
     }
     fn nearest_union(&mut self) -> f64 {
         let (lc, rc, dist) = self.nearest_clusters();
-        let mut new_clusters: Vec<Cluster> = Vec::new();
-        for i in &self.clusters {
-            if ptr::eq(i, lc) || ptr::eq(i, rc) {
-                continue;
-            }
-            new_clusters.push(i.clone());
-        }
-        new_clusters.push(Cluster::union(lc.clone(), rc.clone()));
-        self.clusters = new_clusters;
+        let new_cluster = Cluster::union(self.clusters[lc].clone(), self.clusters[rc].clone());
+        self.clusters[lc] = new_cluster;
+        self.clusters.remove(rc);
         dist
     }
     pub fn cluster_n_times(&mut self, n: usize) -> f64{
