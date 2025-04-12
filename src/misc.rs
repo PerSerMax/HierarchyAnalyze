@@ -9,7 +9,7 @@ pub struct Country {
 
 #[derive(Debug, Clone)]
 pub struct Cluster {
-    pub countries: Vec<Country>,
+    pub countries: Vec<Box<Country>>,
 }
 
 impl Cluster {
@@ -18,7 +18,7 @@ impl Cluster {
             countries: Vec::new(),
         }
     }
-    pub fn add(&mut self, country: Country) {
+    pub fn add(&mut self, country: Box<Country>) {
         self.countries.push(country);
     }
     pub fn range<'a>(a: &'a Cluster, b: &'a Cluster) -> (&'a Country, &'a Country, f64) {
@@ -51,7 +51,7 @@ pub struct Analyze {
 }
 
 impl Analyze {
-    pub fn new(mut countries: Vec<Country>, standartize: bool) -> Analyze {
+    pub fn new(mut countries: Vec<Box<Country>>, standartize: bool) -> Analyze {
         if standartize {
             std_countries(&mut countries);
         }
@@ -127,7 +127,7 @@ pub fn std_val(v: &[f64]) -> f64 {
     (v.iter().map(|x| (x - avg).powi(2)).sum::<f64>() / v.len() as f64).sqrt()
 }
 
-pub fn std_countries(v: &mut [Country]) {
+pub fn std_countries(v: &mut Vec<Box<Country>>) {
     if v.is_empty() || v[0].attrs.is_empty() {
         return;
     }
@@ -152,7 +152,7 @@ pub fn std_countries(v: &mut [Country]) {
     }
 }
 
-pub fn read_file(filename: &str, sep: &str) -> Vec<Country> {
+pub fn read_file(filename: &str, sep: &str) -> Vec<Box<Country>> {
     let mut countries_map: HashMap<String, Vec<f64>> = HashMap::new();
     let data = fs::read_to_string(filename).unwrap_or_else(|e| {
         match e.kind() {
@@ -176,12 +176,12 @@ pub fn read_file(filename: &str, sep: &str) -> Vec<Country> {
             .collect();
         countries_map.insert(country_name, country_attrs);
     }
-    let mut countries: Vec<Country> = Vec::new();
+    let mut countries: Vec<Box<Country>> = Vec::new();
     for (country, attrs) in countries_map {
-        countries.push(Country {
+        countries.push(Box::new(Country {
             name: country,
             attrs,
-        });
+        }));
     }
     countries
 }
