@@ -16,8 +16,7 @@ fn main() {
         .read_line(&mut input)
         .expect("Не удалось прочитать строку");
 
-    let n = input
-        .trim()
+    let n = input.trim()
         .parse::<usize>()
         .expect("Пожалуйста введите число");
 
